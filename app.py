@@ -13,7 +13,10 @@ if "pending_row" not in st.session_state:
 # ──────────────────────────────────────────────────────────────
 # 1. CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────
-DATA_PATH = Path("usage_log.csv")  
+DATA_PATH = Path(".data/usage_log.csv")      # hidden dot-folder
+DATA_PATH.parent.mkdir(exist_ok=True, parents=True)
+
+st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")  
 SUBUNITS = [
     "Scalp", "Forehead – central", "Forehead – lateral", "Temple",
     "Zygomatic-arch (temporal-malar)", "Nasal tip", "Nasal dorsum",
@@ -406,6 +409,12 @@ def main():
         st.caption(f"Build: {date.today()}")
 
     st.title("Head & Neck Local-Flap Selector")
+if "stage" not in st.session_state:
+    st.session_state.stage = 1          # 1 = input form, 2 = feedback
+if "row" not in st.session_state:
+    st.session_state.row = {}           # holds case data during stage 2
+if "rec" not in st.session_state:
+    st.session_state.rec = ""           # recommendation markdown
 
     with st.form("flap_form"):
         col1, col2 = st.columns(2)
@@ -421,25 +430,40 @@ def main():
         rad = st.checkbox("Previously irradiated site")
         submitted = st.form_submit_button("Recommend flap")
 
-    if submitted:
-        st.markdown(decide(loc, kind, cm, depth, hair, age, dia, smk, rad))
-if st.session_state.pending_row:
-    st.markdown("---")
-    st.subheader("Quick feedback")
+  if submitted:
+        # save data & recommendation for next stage
+        st.session_state.row = {
+            "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
+            "loc": loc, "kind": kind, "depth": depth.split()[0], "cm": cm,
+            "hair": hair, "age": age, "dia": dia, "smk": smk, "rad": rad,
+        }
+        st.session_state.rec = decide(loc, kind, cm, depth, hair, age, dia, smk, rad)
+        st.session_state.stage = 2
+        st.experimental_rerun()    # jump straight to stage 2
+
+
+# ╭───────────────── STAGE 2 – recommendation + feedback ─────────────────╮
+elif st.session_state.stage == 2:
+    st.markdown(st.session_state.rec)
+
     with st.form("fb_form"):
         used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
-        alt  = ""
+        alt = ""
         if used == "No":
             alt = st.text_input("Which flap did you use instead?")
-        fb_submit = st.form_submit_button("Submit feedback")
+        sent = st.form_submit_button("Submit feedback")
 
-    if fb_submit:
-        row = st.session_state.pending_row
+    if sent:
+        row = st.session_state.row.copy()
         row["used_recommended"] = (used == "Yes")
-        row["alt_flap_if_no"] = alt.strip()
-        _log(row)
-        st.success("Thank you!  Entry recorded.")
-        st.session_state.pending_row = None
+        row["alt_flap_if_no"]   = alt.strip()
+        log_row(row)
+        st.success("Thank you – entry recorded.")
+        # reset for a new case
+        st.session_state.stage = 1
+        st.session_state.row   = {}
+        st.session_state.rec   = ""
+        st.experimental_rerun()
     st.markdown("---")
     st.caption("Research tool – not intended as clinical advice.")
 
