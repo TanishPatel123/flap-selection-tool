@@ -497,48 +497,58 @@ if not st.session_state.case_submitted:
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
-    # 1️⃣  Feedback form – widgets have unique keys so values persist
+    # ------ 1️⃣  Feedback form ------
     with st.form("feedback_form"):
+        # radio + textbox always rendered, but textbox grays out when not needed
         used = st.radio(
             "Did you use the recommended flap?",
             ["Yes", "No"],
-            key="used_recommended",          # persist in session_state
+            key="used_recommended",          # persists across reruns
         )
-        # Text box always exists (hidden CSS optional), value stored under key
+        disabled_state = (used == "Yes")
         alt_flap = st.text_input(
             "Which flap did you use instead?",
-            key="alt_flap_text"
-        ) if used == "No" else ""
+            key="alt_flap_text",
+            disabled=disabled_state          # greyed-out when Yes
+        )
         send = st.form_submit_button("Submit feedback")
 
-    # 2️⃣  On submit, build row from session_state values
+    # ------ 2️⃣  On submit, assemble row ------
     if send:
-        import re
+        import re, csv
 
-        # Pull the flap name from the markdown block
+        # a. extract plain-text flap name from markdown
         md = st.session_state.recommendation
-        m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
-        rec_flap = m.group(1).strip() if m else "(parse failed)"
+        match = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
+        rec_flap = match.group(1).strip() if match else "(parse failed)"
 
+        # b. build row dict
         row = st.session_state.case_row.copy()
         row.update({
             "recommended_flap":  rec_flap,
             "used_recommended":  (st.session_state.used_recommended == "Yes"),
-            "alt_flap_if_no":    st.session_state.get("alt_flap_text", "").strip(),
+            "alt_flap_if_no":    st.session_state.alt_flap_text.strip(),
         })
 
-        first = not DATA_PATH.exists()
-        pd.DataFrame([row]).to_csv(
-            DATA_PATH, mode="a", header=first, index=False
-        )
+        # c. write / append ensuring header always has NEW columns
+        first_write = not DATA_PATH.exists()
+        with DATA_PATH.open("a", newline="") as f:
+            writer = csv.DictWriter(
+                f,
+                fieldnames=row.keys(),
+                extrasaction="ignore"
+            )
+            if first_write:
+                writer.writeheader()
+            writer.writerow(row)
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
-        # Clear widget state so the next case starts fresh
+
+        # clear per-case widget state
         for k in ("used_recommended", "alt_flap_text"):
             if k in st.session_state:
                 del st.session_state[k]
-
 
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
