@@ -493,39 +493,39 @@ if not st.session_state.case_submitted:
 # ───────────────────────────────────────────────────────────────
 # 2️⃣  SHOW RECOMMENDATION & FEEDBACK  (single page)
 # ───────────────────────────────────────────────────────────────
-# ───────── STAGE 2 – recommendation + feedback (single page) ─────────
+# ───────── STAGE 2 – recommendation + feedback (single-page) ─────────
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
     with st.form("feedback_form"):
         used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
-        alt_flap = ""
-        if used == "No":
-            alt_flap = st.text_input("Which flap did you use instead?")
+        alt_flap = st.text_input("Which flap did you use instead?") if used == "No" else ""
         send = st.form_submit_button("Submit feedback")
 
     if send:
-        # -------- build CSV row --------
+        # 1️⃣ Pull the **plain text** flap name from the recommendation block
+        import re
         md = st.session_state.recommendation
-        # extract text after "**Recommended flap:** "
-        rec_flap = (
-            md.split("**Recommended flap:**", 1)[1]
-              .split("\n", 1)[0]            # up to first newline
-              .strip()
-        )
+        match = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
+        rec_flap = match.group(1).strip() if match else "(parse failed)"
 
+        # 2️⃣ Assemble the CSV row with ALL required columns
         row = st.session_state.case_row.copy()
-        row["recommended_flap"]  = rec_flap
-        row["used_recommended"]  = (used == "Yes")
-        row["alt_flap_if_no"]    = alt_flap.strip()
+        row.update({
+            "recommended_flap":   rec_flap,
+            "used_recommended":   (used == "Yes"),
+            "alt_flap_if_no":     alt_flap.strip(),
+        })
 
-        first = not DATA_PATH.exists()
+        # 3️⃣ Write (add header if file doesn't exist yet)
+        first_write = not DATA_PATH.exists()
         pd.DataFrame([row]).to_csv(
-            DATA_PATH, mode="a", header=first, index=False
+            DATA_PATH, mode="a", header=first_write, index=False
         )
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
+
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
 # ───────────────────────────────────────────────────────────────
