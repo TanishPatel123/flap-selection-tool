@@ -557,10 +557,17 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
 # ───────────────────────────────────────────────────────────────
 if st.session_state.feedback_done:
     if st.button("Start new case"):
+        # clear everything related to the completed case
         for k in ("case_submitted", "feedback_done"):
             st.session_state[k] = False
         st.session_state.case_row = {}
         st.session_state.recommendation = ""
+        for k in ("used_recommended", "alt_flap_text"):
+            st.session_state.pop(k, None)
+
+        # 🔄 force an immediate rerun so the entry form shows right away
+        st.experimental_rerun()           # ← NEW
+
 
 # ───────────────────────────────────────────────────────────────
 # FOOTER
