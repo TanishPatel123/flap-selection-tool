@@ -520,10 +520,6 @@ if send:
         st.warning("Please tell us which flap you used.")
         st.stop()
 
-    # 2️⃣  When the user clicks Submit, write everything to CSV
-    if send:
-        import re, csv
-
         # a. extract plain flap name from markdown
         md = st.session_state.recommendation
         m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
