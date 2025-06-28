@@ -6,10 +6,6 @@ from datetime import datetime, date
 import pandas as pd
 import streamlit as st
    
-
-# initialise session key BEFORE any later access
-if "pending_row" not in st.session_state:
-    st.session_state["pending_row"] = None
 # ──────────────────────────────────────────────────────────────
 # 1. CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────
