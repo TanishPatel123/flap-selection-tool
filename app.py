@@ -409,6 +409,7 @@ def main():
         st.caption(f"Build: {date.today()}")
 
     st.title("Head & Neck Local-Flap Selector")
+
 if "stage" not in st.session_state:
     st.session_state.stage = 1          # 1 = input form, 2 = feedback
 if "row" not in st.session_state:
@@ -429,6 +430,10 @@ if "rec" not in st.session_state:
         smk = st.checkbox("Active smoker")
         rad = st.checkbox("Previously irradiated site")
         submitted = st.form_submit_button("Recommend flap")
+
+
+
+
 if submitted:
         st.session_state.row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
