@@ -498,23 +498,27 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
     # 1️⃣  Feedback form (radio + textbox share session keys)
-    with st.form("feedback_form"):
-        used_choice = st.radio(
-            "Did you use the recommended flap?",
-            ["Yes", "No"],
-            key="used_recommended",        # persists across reruns
-            horizontal=True,
-        )
+   with st.form("feedback_form"):
+    used_choice = st.radio(
+        "Did you use the recommended flap?",
+        ["Yes", "No"],
+        key="used_recommended",
+        horizontal=True,
+    )
 
-        # Text box always present; disabled unless "No" chosen
-        alt_flap_val = st.text_input(
-            "Which flap did you use instead?",
-            key="alt_flap_text",
-            disabled=(used_choice == "Yes"),
-            placeholder="Type alternative flap here…"  # shows when enabled
-        )
+    alt_flap_val = st.text_input(          # ← always enabled now
+        "If you used a different flap, which one?",
+        key="alt_flap_text",
+        placeholder="Type alternative flap here…"
+    )
 
-        send = st.form_submit_button("Submit feedback")
+    send = st.form_submit_button("Submit feedback")
+
+# write to CSV only after basic validation
+if send:
+    if used_choice == "No" and not alt_flap_val.strip():
+        st.warning("Please tell us which flap you used.")
+        st.stop()
 
     # 2️⃣  When the user clicks Submit, write everything to CSV
     if send:
