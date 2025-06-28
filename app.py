@@ -1,11 +1,11 @@
 # app.py  –  Head-&-Neck Local-Flap Selector (research prototype)
 # Author: Tanish Patel
 # -----------------------------------------------------------------
-from pathlib import Path      
-import datetime
-import streamlit as st
+from pathlib import Path
+from datetime import datetime, date
 import pandas as pd
-from datetime import date    
+import streamlit as st
+   
 
 # initialise session key BEFORE any later access
 if "pending_row" not in st.session_state:
@@ -387,88 +387,129 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
         f"**Notes:** {' '.join(notes) if notes else 'None.'}"
     )
 
-# ──────────────────────────────────────────────────────────────
-# 3.  STREAMLIT UI
-# ──────────────────────────────────────────────────────────────
-def main():
-    st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")
+# ───────────────────────────────────────────────────────────────
+# 1️⃣  CONSTANTS & UTILITY
+# ───────────────────────────────────────────────────────────────
+DATA_PATH = Path(".data/usage_log.csv")
+DATA_PATH.parent.mkdir(exist_ok=True, parents=True)   # hidden folder
 
-    with st.sidebar:
-        st.header("Research & Privacy")
-        st.markdown("""
-        **Purpose**  
-        Prototype decision-support tool for local flap selection.  
+SUBUNITS = [
+    "Scalp", "Forehead – central", "Forehead – lateral", "Temple",
+    "Zygomatic-arch (temporal-malar)", "Nasal tip", "Nasal dorsum",
+    "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
+    "Medial canthus", "Lateral canthus", "Upper lip – central",
+    "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
+    "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
+    "Ear – lobule", "Peri-auricular skin",
+]
 
-        **Privacy**  
-        * No personal identifiers leave your browser.  
-        * Only aggregate, anonymous inputs and recommendations are recorded for research use only.
+DEPTH_OPTS = [
+    "Superficial (skin only)",
+    "Partial thickness (subcut / perichondrium)",
+    "Full thickness (cartilage / bone exposed)",
+]
 
-        By clicking **Recommend flap**, you consent
-        to this anonymised data use and collection.
-        """)
-        st.caption(f"Build: {date.today()}")
+def log_row(row: dict) -> None:
+    """Append one anonymised row to .data/usage_log.csv."""
+    first = not DATA_PATH.exists()
+    pd.DataFrame([row]).to_csv(DATA_PATH, mode="a", header=first, index=False)
 
-    st.title("Head & Neck Local-Flap Selector")
+# ───────────────────────────────────────────────────────────────
+# 2️⃣  STREAMLIT PAGE CONFIG & SIDEBAR
+# ───────────────────────────────────────────────────────────────
+st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")
 
+with st.sidebar:
+    st.header("Research & Privacy")
+    st.markdown(
+        "**Prototype** tool for an ethics-approved study.\n\n"
+        "No identifiers (names, MRNs, IPs, e-mails) are saved.\n"
+        "Only anonymous case parameters & your feedback are stored "
+        "in a private file visible *only* to the app owner.\n"
+    )
+    if DATA_PATH.exists():
+        st.caption(f"Logged cases: {len(pd.read_csv(DATA_PATH))}")
+    st.caption(f"Build: {date.today()}")
+
+# ───────────────────────────────────────────────────────────────
+# 3️⃣  SESSION-STATE INITIALISATION
+# ───────────────────────────────────────────────────────────────
 if "stage" not in st.session_state:
-    st.session_state.stage = 1          # 1 = input form, 2 = feedback
-if "row" not in st.session_state:
-    st.session_state.row = {}           # holds case data during stage 2
-if "rec" not in st.session_state:
-    st.session_state.rec = ""           # recommendation markdown
+    st.session_state.stage = 1          # 1=input, 2=feedback
+if "case_row" not in st.session_state:
+    st.session_state.case_row = {}
+if "recommendation_md" not in st.session_state:
+    st.session_state.recommendation_md = ""
 
-    with st.form("flap_form"):
+# ───────────────────────────────────────────────────────────────
+# 4️⃣  STAGE 1 – CASE INPUT + RECOMMENDATION
+# ───────────────────────────────────────────────────────────────
+if st.session_state.stage == 1:
+    submitted = False  # ensure the name exists for later
+
+    with st.form("case_form"):
         col1, col2 = st.columns(2)
         loc   = col1.selectbox("Anatomical sub-unit", SUBUNITS)
-        kind  = col2.selectbox("Defect type", ["Oncologic", "Traumatic", "Congenital"])
+        kind  = col2.selectbox("Defect type",
+                               ["Oncologic", "Traumatic", "Congenital"])
         depth = col1.radio("Depth of defect", DEPTH_OPTS)
-        cm    = col2.number_input("Largest diameter (cm)", 0.1, 25.0, 1.0, 0.1)
-        age   = col1.number_input("Patient age (years)", 0, 120, 60, 1)
+        cm    = col2.number_input("Largest diameter (cm)",
+                                  min_value=0.1, max_value=25.0,
+                                  value=1.0, step=0.1)
+        age   = col1.number_input("Patient age (years)",
+                                  min_value=0, max_value=120,
+                                  value=60, step=1)
         hair  = col2.checkbox("Hair-bearing skin?", True)
         st.markdown("##### Risk factors")
         dia = st.checkbox("Diabetes")
         smk = st.checkbox("Active smoker")
         rad = st.checkbox("Previously irradiated site")
+
         submitted = st.form_submit_button("Recommend flap")
 
-
-
-
+    # This IF **must** be indented exactly 4 spaces
     if submitted:
-        st.session_state.row = {
+        # Store case row & recommendation in session
+        st.session_state.case_row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
-            "loc": loc, "kind": kind, "depth": depth.split()[0], "cm": cm,
-            "hair": hair, "age": age, "dia": dia, "smk": smk, "rad": rad,
+            "loc": loc, "kind": kind, "depth": depth.split()[0],
+            "cm": cm, "hair": hair, "age": age,
+            "dia": dia, "smk": smk, "rad": rad,
         }
-        st.session_state.rec = decide(loc, kind, cm, depth, hair, age, dia, smk, rad)
+        st.session_state.recommendation_md = decide(
+            loc, kind, cm, depth, hair, age, dia, smk, rad
+        )
         st.session_state.stage = 2
-        st.experimental_rerun()    # jump straight to stage 2
+        st.experimental_rerun()
 
-
-# ╭───────────────── STAGE 2 – recommendation + feedback ─────────────────╮
+# ───────────────────────────────────────────────────────────────
+# 5️⃣  STAGE 2 – SHOW RECOMMENDATION + FEEDBACK QUESTIONS
+# ───────────────────────────────────────────────────────────────
 elif st.session_state.stage == 2:
-    st.markdown(st.session_state.rec)
+    st.markdown(st.session_state.recommendation_md)
 
-    with st.form("fb_form"):
+    with st.form("feedback_form"):
         used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
-        alt = ""
+        alt_flap = ""
         if used == "No":
-            alt = st.text_input("Which flap did you use instead?")
+            alt_flap = st.text_input("Which flap did you use instead?")
         sent = st.form_submit_button("Submit feedback")
 
     if sent:
-        row = st.session_state.row.copy()
+        row = st.session_state.case_row.copy()
         row["used_recommended"] = (used == "Yes")
-        row["alt_flap_if_no"]   = alt.strip()
+        row["alt_flap_if_no"]   = alt_flap.strip()
         log_row(row)
-        st.success("Thank you – entry recorded.")
-        # reset for a new case
+        st.success("Thank you – entry logged.")
+        # reset for next patient
         st.session_state.stage = 1
-        st.session_state.row   = {}
-        st.session_state.rec   = ""
+        st.session_state.case_row = {}
+        st.session_state.recommendation_md = ""
         st.experimental_rerun()
-    st.markdown("---")
-    st.caption("Research tool – not intended as clinical advice.")
 
-if __name__ == "__main__":
-    main()
+# ───────────────────────────────────────────────────────────────
+# 6️⃣  FOOTER
+# ───────────────────────────────────────────────────────────────
+st.markdown("---")
+st.caption("Research prototype – not intended as clinical advice.")
