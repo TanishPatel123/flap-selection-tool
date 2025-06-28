@@ -477,7 +477,7 @@ if st.session_state.stage == 1:
             loc, kind, cm, depth, hair, age, dia, smk, rad
         )
         st.session_state.stage = 2
-        st.experimental_rerun()
+        st.rerun()
 
 # ───────────────────────────────────────────────────────────────
 # 5️⃣  STAGE 2 – SHOW RECOMMENDATION + FEEDBACK QUESTIONS
