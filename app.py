@@ -387,14 +387,14 @@ def main():
         st.header("Research & Privacy")
         st.markdown("""
         **Purpose**  
-        Prototype decision-support tool for a U of S ethics-approved study.  
+        Prototype decision-support tool for local flap selection.  
 
         **Privacy**  
         * No personal identifiers leave your browser.  
-        * Only aggregate, anonymous usage metrics may be logged.
+        * Only aggregate, anonymous inputs and recommendations are recorded for research use only.
 
-        By clicking **Recommend flap**, you confirm you’re ≥18 y and consent
-        to this anonymised data use.
+        By clicking **Recommend flap**, you consent
+        to this anonymised data use and collection.
         """)
         st.caption(f"Build: {date.today()}")
 
@@ -416,7 +416,23 @@ def main():
 
     if submitted:
         st.markdown(decide(loc, kind, cm, depth, hair, age, dia, smk, rad))
+if st.session_state.pending_row:
+    st.markdown("---")
+    st.subheader("Quick feedback")
+    with st.form("fb_form"):
+        used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
+        alt  = ""
+        if used == "No":
+            alt = st.text_input("Which flap did you use instead?")
+        fb_submit = st.form_submit_button("Submit feedback")
 
+    if fb_submit:
+        row = st.session_state.pending_row
+        row["used_recommended"] = (used == "Yes")
+        row["alt_flap_if_no"] = alt.strip()
+        _log(row)
+        st.success("Thank you!  Entry recorded.")
+        st.session_state.pending_row = None
     st.markdown("---")
     st.caption("Research tool – not intended as clinical advice.")
 
