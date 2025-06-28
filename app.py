@@ -493,6 +493,7 @@ if not st.session_state.case_submitted:
 # ───────────────────────────────────────────────────────────────
 # 2️⃣  SHOW RECOMMENDATION & FEEDBACK  (single page)
 # ───────────────────────────────────────────────────────────────
+# ───────── STAGE 2 – recommendation + feedback (single page) ─────────
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
@@ -504,16 +505,27 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         send = st.form_submit_button("Submit feedback")
 
     if send:
+        # -------- build CSV row --------
+        md = st.session_state.recommendation
+        # extract text after "**Recommended flap:** "
+        rec_flap = (
+            md.split("**Recommended flap:**", 1)[1]
+              .split("\n", 1)[0]            # up to first newline
+              .strip()
+        )
+
         row = st.session_state.case_row.copy()
-        row["used_recommended"] = (used == "Yes")
-        row["alt_flap_if_no"]   = alt_flap.strip()
+        row["recommended_flap"]  = rec_flap
+        row["used_recommended"]  = (used == "Yes")
+        row["alt_flap_if_no"]    = alt_flap.strip()
+
         first = not DATA_PATH.exists()
         pd.DataFrame([row]).to_csv(
             DATA_PATH, mode="a", header=first, index=False
         )
+
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
-
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
 # ───────────────────────────────────────────────────────────────
