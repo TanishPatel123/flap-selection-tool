@@ -3,10 +3,11 @@
 # -----------------------------------------------------------------
 import streamlit as st
 from datetime import date
-
+import pandas as pd
 # ──────────────────────────────────────────────────────────────
 # 1. CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────
+DATA_PATH = pathlib.Path("usage_log.csv")
 SUBUNITS = [
     "Scalp", "Forehead – central", "Forehead – lateral", "Temple",
     "Zygomatic-arch (temporal-malar)", "Nasal tip", "Nasal dorsum",
