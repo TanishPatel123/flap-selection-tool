@@ -431,32 +431,33 @@ with st.sidebar:
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  SESSION-STATE INITIALISATION
 # ───────────────────────────────────────────────────────────────
-if "stage" not in st.session_state:
-    st.session_state.stage = 1          # 1=input, 2=feedback
-if "case_row" not in st.session_state:
-    st.session_state.case_row = {}
-if "recommendation_md" not in st.session_state:
-    st.session_state.recommendation_md = ""
+for key, default in {
+    "case_submitted": False,
+    "feedback_done":  False,
+    "case_row":       {},
+    "recommendation": "",
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # ───────────────────────────────────────────────────────────────
-# 4️⃣  STAGE 1 – CASE INPUT + RECOMMENDATION
+# 1️⃣  CASE-ENTRY FORM  (shows until first submit)
 # ───────────────────────────────────────────────────────────────
-if st.session_state.stage == 1:
-    submitted = False  # ensure the name exists for later
-
+if not st.session_state.case_submitted:
     with st.form("case_form"):
-        col1, col2 = st.columns(2)
-        loc   = col1.selectbox("Anatomical sub-unit", SUBUNITS)
-        kind  = col2.selectbox("Defect type",
-                               ["Oncologic", "Traumatic", "Congenital"])
-        depth = col1.radio("Depth of defect", DEPTH_OPTS)
-        cm    = col2.number_input("Largest diameter (cm)",
-                                  min_value=0.1, max_value=25.0,
-                                  value=1.0, step=0.1)
-        age   = col1.number_input("Patient age (years)",
-                                  min_value=0, max_value=120,
-                                  value=60, step=1)
-        hair  = col2.checkbox("Hair-bearing skin?", True)
+        c1, c2 = st.columns(2)
+        loc   = c1.selectbox("Anatomical sub-unit", SUBUNITS)
+        kind  = c2.selectbox("Defect type",
+                             ["Oncologic", "Traumatic", "Congenital"])
+        depth = c1.radio("Depth of defect", DEPTH_OPTS)
+        cm    = c2.number_input("Largest diameter (cm)",
+                                min_value=0.1, max_value=25.0,
+                                value=1.0, step=0.1)
+        age   = c1.number_input("Patient age (years)",
+                                min_value=0, max_value=120,
+                                value=60, step=1)
+        hair  = c2.checkbox("Hair-bearing skin?", True)
+
         st.markdown("##### Risk factors")
         dia = st.checkbox("Diabetes")
         smk = st.checkbox("Active smoker")
@@ -464,48 +465,55 @@ if st.session_state.stage == 1:
 
         submitted = st.form_submit_button("Recommend flap")
 
-    # This IF **must** be indented exactly 4 spaces
     if submitted:
-        # Store case row & recommendation in session
+        # compute recommendation and stash everything
         st.session_state.case_row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
             "loc": loc, "kind": kind, "depth": depth.split()[0],
             "cm": cm, "hair": hair, "age": age,
             "dia": dia, "smk": smk, "rad": rad,
         }
-        st.session_state.recommendation_md = decide(
+        st.session_state.recommendation = decide(
             loc, kind, cm, depth, hair, age, dia, smk, rad
         )
-        st.session_state.stage = 2
-        st.rerun()
+        st.session_state.case_submitted = True
 
 # ───────────────────────────────────────────────────────────────
-# 5️⃣  STAGE 2 – SHOW RECOMMENDATION + FEEDBACK QUESTIONS
+# 2️⃣  SHOW RECOMMENDATION & FEEDBACK  (single page)
 # ───────────────────────────────────────────────────────────────
-elif st.session_state.stage == 2:
-    st.markdown(st.session_state.recommendation_md)
+if st.session_state.case_submitted and not st.session_state.feedback_done:
+    st.markdown(st.session_state.recommendation)
 
     with st.form("feedback_form"):
         used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
         alt_flap = ""
         if used == "No":
             alt_flap = st.text_input("Which flap did you use instead?")
-        sent = st.form_submit_button("Submit feedback")
+        send = st.form_submit_button("Submit feedback")
 
-    if sent:
+    if send:
         row = st.session_state.case_row.copy()
         row["used_recommended"] = (used == "Yes")
         row["alt_flap_if_no"]   = alt_flap.strip()
-        log_row(row)
-        st.success("Thank you – entry logged.")
-        # reset for next patient
-        st.session_state.stage = 1
-        st.session_state.case_row = {}
-        st.session_state.recommendation_md = ""
-        st.experimental_rerun()
+        first = not DATA_PATH.exists()
+        pd.DataFrame([row]).to_csv(
+            DATA_PATH, mode="a", header=first, index=False
+        )
+        st.success("Thank you — entry logged.")
+        st.session_state.feedback_done = True
 
 # ───────────────────────────────────────────────────────────────
-# 6️⃣  FOOTER
+# 3️⃣  RESET BUTTON AFTER FEEDBACK
+# ───────────────────────────────────────────────────────────────
+if st.session_state.feedback_done:
+    if st.button("Start new case"):
+        for k in ("case_submitted", "feedback_done"):
+            st.session_state[k] = False
+        st.session_state.case_row = {}
+        st.session_state.recommendation = ""
+
+# ───────────────────────────────────────────────────────────────
+# FOOTER
 # ───────────────────────────────────────────────────────────────
 st.markdown("---")
-st.caption("Research prototype – not intended as clinical advice.")
+st.caption("Research prototype — not intended as clinical advice.")
