@@ -419,10 +419,10 @@ st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")
 with st.sidebar:
     st.header("Research & Privacy")
     st.markdown(
-        "**Prototype** tool for an ethics-approved study.\n\n"
-        "No identifiers (names, MRNs, IPs, e-mails) are saved.\n"
-        "Only anonymous case parameters & your feedback are stored "
-        "in a private file visible *only* to the app owner.\n"
+        "**Prototype** tool for determining optimal local flap for excision closure.\n\n"
+        "No personal identifiers are saved.\n"
+        "Only anonymous input parameters & your feedback are stored "
+        "in a private file visible *only* to the Research team.\n"
     )
     if DATA_PATH.exists():
         st.caption(f"Logged cases: {len(pd.read_csv(DATA_PATH))}")
@@ -497,32 +497,35 @@ if not st.session_state.case_submitted:
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
-    # ------ 1️⃣  Feedback form ------
+    # 1️⃣  Feedback form (radio + textbox share session keys)
     with st.form("feedback_form"):
-        # radio + textbox always rendered, but textbox grays out when not needed
-        used = st.radio(
+        used_choice = st.radio(
             "Did you use the recommended flap?",
             ["Yes", "No"],
-            key="used_recommended",          # persists across reruns
+            key="used_recommended",        # persists across reruns
+            horizontal=True,
         )
-        disabled_state = (used == "Yes")
-        alt_flap = st.text_input(
+
+        # Text box always present; disabled unless "No" chosen
+        alt_flap_val = st.text_input(
             "Which flap did you use instead?",
             key="alt_flap_text",
-            disabled=disabled_state          # greyed-out when Yes
+            disabled=(used_choice == "Yes"),
+            placeholder="Type alternative flap here…"  # shows when enabled
         )
+
         send = st.form_submit_button("Submit feedback")
 
-    # ------ 2️⃣  On submit, assemble row ------
+    # 2️⃣  When the user clicks Submit, write everything to CSV
     if send:
         import re, csv
 
-        # a. extract plain-text flap name from markdown
+        # a. extract plain flap name from markdown
         md = st.session_state.recommendation
-        match = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
-        rec_flap = match.group(1).strip() if match else "(parse failed)"
+        m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
+        rec_flap = m.group(1).strip() if m else "(parse failed)"
 
-        # b. build row dict
+        # b. build CSV row
         row = st.session_state.case_row.copy()
         row.update({
             "recommended_flap":  rec_flap,
@@ -530,20 +533,20 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             "alt_flap_if_no":    st.session_state.alt_flap_text.strip(),
         })
 
-        # c. write / append ensuring header always has NEW columns
+        # c. append row, adding header on first write
         first_write = not DATA_PATH.exists()
         with DATA_PATH.open("a", newline="") as f:
-            writer = csv.DictWriter(
-                f,
-                fieldnames=row.keys(),
-                extrasaction="ignore"
-            )
+            writer = csv.DictWriter(f, fieldnames=row.keys())
             if first_write:
                 writer.writeheader()
             writer.writerow(row)
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
+
+        # clear per-case widget state
+        for k in ("used_recommended", "alt_flap_text"):
+            st.session_state.pop(k, None)
 
         # clear per-case widget state
         for k in ("used_recommended", "alt_flap_text"):
@@ -564,4 +567,4 @@ if st.session_state.feedback_done:
 # FOOTER
 # ───────────────────────────────────────────────────────────────
 st.markdown("---")
-st.caption("Research prototype — not intended as clinical advice.")
+st.caption("Research prototype — use best clinical judgement.")
