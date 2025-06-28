@@ -5,6 +5,7 @@ from pathlib import Path
 import datetime
 import streamlit as st
 import pandas as pd
+from datetime import date    
 
 # initialise session key BEFORE any later access
 if "pending_row" not in st.session_state:
