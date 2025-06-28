@@ -1,3 +1,6 @@
+# app.py  –  Head-&-Neck Local-Flap Selector (research prototype)
+# Author: Tanish Patel
+# -----------------------------------------------------------------
 import streamlit as st
 from datetime import date
 
@@ -5,21 +8,14 @@ from datetime import date
 # 1. CONSTANTS & HELPERS
 # ──────────────────────────────────────────────────────────────
 SUBUNITS = [
-    # Scalp / forehead / temple / zygoma
     "Scalp", "Forehead – central", "Forehead – lateral", "Temple",
-    "Zygomatic-arch (temporal-malar)",
-    # Nose
-    "Nasal tip", "Nasal dorsum", "Nasal ala / side-wall",
-    # Eyelids / canthi
-    "Upper eyelid", "Lower eyelid", "Medial canthus", "Lateral canthus",
-    # Lips & commissure
-    "Upper lip – central", "Upper lip – lateral",
-    "Lower lip – central", "Lower lip – lateral", "Oral commissure",
-    # Cheek / chin
-    "Cheek – infra-orbital", "Cheek – buccal", "Chin – mentum",
-    # Ear / peri-auricular
-    "Ear – helical rim", "Ear – conchal bowl", "Ear – lobule",
-    "Peri-auricular skin",
+    "Zygomatic-arch (temporal-malar)", "Nasal tip", "Nasal dorsum",
+    "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
+    "Medial canthus", "Lateral canthus", "Upper lip – central",
+    "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
+    "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
+    "Ear – lobule", "Peri-auricular skin",
 ]
 
 DEPTH_OPTS = [
@@ -28,7 +24,6 @@ DEPTH_OPTS = [
     "Full thickness (cartilage / bone exposed)",
 ]
 
-# (≤ small , ≤ medium → else large)  ── thresholds lifted verbatim from your file
 THR = {
     "Scalp": (2, 6), "Forehead – central": (1.5, 5), "Forehead – lateral": (1.5, 4),
     "Temple": (1.5, 4), "Zygomatic-arch (temporal-malar)": (2, 4),
@@ -44,19 +39,19 @@ THR = {
 }
 
 def _cat(loc: str, cm: float) -> str:
-    """small / medium / large categorisation"""
     lo, mid = THR[loc]
     return "small" if cm <= lo else "medium" if cm <= mid else "large"
 
-pick = lambda size, m: m[size]          # little helper
+pick = lambda size, m: m[size]
 
 # ──────────────────────────────────────────────────────────────
-# 2.  DECISION ENGINE  (full logic copied from notebook)  :contentReference[oaicite:0]{index=0}
-#    Only edits: removed ipywidget references & patched risk-note section
+# 2.  DECISION ENGINE  (full logic preserved)
 # ──────────────────────────────────────────────────────────────
-def decide(loc,kind,cm,depth,hair,age,dia,smk,rad):
-    size = cat(loc,cm)
+def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
+    # FIX: use _cat(), not cat()
+    size = _cat(loc, cm)
     flap = rationale = ""
+
     # ————————————————— SCALP —————————————————
     if loc == "Scalp":
         if depth.startswith("Full"):
@@ -357,14 +352,12 @@ def decide(loc,kind,cm,depth,hair,age,dia,smk,rad):
             "large":">4 cm extended cervicofacial."})
         if depth.startswith("Full"):
             rationale += "  Parotid fascia exposed – SMAS turned in."
+
     # ————————————————— NOTES / RISK FLAGS —————————————————
     notes = []
-    if smk:
-        notes.append("Smoking jeopardises flap – cessation essential.")
-    if dia:
-        notes.append("Optimise glycaemia pre-op.")
-    if rad:
-        notes.append("Radiated skin – consider delay/wider pedicle.")
+    if smk: notes.append("Smoking jeopardises flap – cessation essential.")
+    if dia: notes.append("Optimise glycaemia pre-op.")
+    if rad: notes.append("Radiated skin – consider delay/wider pedicle.")
     if hair and "graft" in flap.lower():
         notes.append("A graft on hair-bearing skin causes alopecia; flap chosen.")
     if age < 18:
@@ -385,43 +378,36 @@ def decide(loc,kind,cm,depth,hair,age,dia,smk,rad):
     )
 
 # ──────────────────────────────────────────────────────────────
-# 3.  STREAMLIT USER INTERFACE
+# 3.  STREAMLIT UI
 # ──────────────────────────────────────────────────────────────
 def main():
-    st.set_page_config(page_title="Flap-Selector (Research Prototype)",
-                       page_icon="🩺", layout="wide")
+    st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")
 
-    # ---- Privacy & Ethics sidebar ----
     with st.sidebar:
-        st.header("Research Information & Privacy")
-        st.markdown(
-            """
-            **Study purpose**  
-            This prototype aids surgical decision-making for a research project
-            approved by the University of Saskatchewan REB.  
-            **Data privacy**  
-            • No personal identifiers are stored or transmitted.  
-            • All inputs remain local to your browser session and are cleared
-              when you close the tab.  
-            • Aggregate, anonymised usage counts may be logged to monitor
-              algorithm performance.  
-            By clicking **“Recommend flap”** you confirm you are ≥18 years old
-            and consent to this anonymised data use.
-            """
-        )
-        st.caption(f"Build date: {date.today().isoformat()}")
+        st.header("Research & Privacy")
+        st.markdown("""
+        **Purpose**  
+        Prototype decision-support tool for a U of S ethics-approved study.  
+
+        **Privacy**  
+        * No personal identifiers leave your browser.  
+        * Only aggregate, anonymous usage metrics may be logged.
+
+        By clicking **Recommend flap**, you confirm you’re ≥18 y and consent
+        to this anonymised data use.
+        """)
+        st.caption(f"Build: {date.today()}")
 
     st.title("Head & Neck Local-Flap Selector")
 
-    # ---- Input form ----
-    with st.form(key="flap_form"):
-        c1, c2 = st.columns(2)
-        loc   = c1.selectbox("Anatomical sub-unit", SUBUNITS)
-        kind  = c2.selectbox("Defect type", ["Oncologic", "Traumatic", "Congenital"])
-        depth = c1.radio("Depth of defect", DEPTH_OPTS, index=0)
-        cm    = c2.number_input("Largest diameter (cm)", 0.1, 25.0, 1.0, 0.1)
-        age   = c1.number_input("Patient age (years)", 0, 120, 60, 1)
-        hair  = c2.checkbox("Hair-bearing skin?", True)
+    with st.form("flap_form"):
+        col1, col2 = st.columns(2)
+        loc   = col1.selectbox("Anatomical sub-unit", SUBUNITS)
+        kind  = col2.selectbox("Defect type", ["Oncologic", "Traumatic", "Congenital"])
+        depth = col1.radio("Depth of defect", DEPTH_OPTS)
+        cm    = col2.number_input("Largest diameter (cm)", 0.1, 25.0, 1.0, 0.1)
+        age   = col1.number_input("Patient age (years)", 0, 120, 60, 1)
+        hair  = col2.checkbox("Hair-bearing skin?", True)
         st.markdown("##### Risk factors")
         dia = st.checkbox("Diabetes")
         smk = st.checkbox("Active smoker")
@@ -432,11 +418,7 @@ def main():
         st.markdown(decide(loc, kind, cm, depth, hair, age, dia, smk, rad))
 
     st.markdown("---")
-    st.caption(
-        "Disclaimer – This tool is for research and educational purposes only "
-        "and **does not constitute medical advice**. Clinical decisions remain "
-        "the responsibility of the treating surgeon."
-    )
+    st.caption("Research tool – not intended as clinical advice.")
 
 if __name__ == "__main__":
     main()
