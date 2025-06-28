@@ -429,9 +429,7 @@ if "rec" not in st.session_state:
         smk = st.checkbox("Active smoker")
         rad = st.checkbox("Previously irradiated site")
         submitted = st.form_submit_button("Recommend flap")
-
   if submitted:
-        # save data & recommendation for next stage
         st.session_state.row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
             "loc": loc, "kind": kind, "depth": depth.split()[0], "cm": cm,
