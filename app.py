@@ -427,6 +427,18 @@ with st.sidebar:
     if DATA_PATH.exists():
         st.caption(f"Logged cases: {len(pd.read_csv(DATA_PATH))}")
     st.caption(f"Build: {date.today()}")
+# -- INSIDE the "with st.sidebar:" block --
+if DATA_PATH.exists():
+    # OPTIONAL one-line password gate ─ remove if not needed
+    pw_ok = st.text_input("Admin password", type="password") == st.secrets["ADMIN_PASS"]
+
+    if pw_ok:
+        st.download_button(
+            "⬇️  Download usage CSV",
+            data=DATA_PATH.read_bytes(),
+            file_name="usage_log.csv",
+            mime="text/csv",
+        )
 
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  SESSION-STATE INITIALISATION
