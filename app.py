@@ -434,7 +434,7 @@ if "rec" not in st.session_state:
 
 
 
-if submitted:
+    if submitted:
         st.session_state.row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
             "loc": loc, "kind": kind, "depth": depth.split()[0], "cm": cm,
