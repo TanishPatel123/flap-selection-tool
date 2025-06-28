@@ -497,46 +497,49 @@ if not st.session_state.case_submitted:
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
-    # 1️⃣  Feedback form (radio + textbox share session keys)
-   with st.form("feedback_form"):
-    used_choice = st.radio(
-        "Did you use the recommended flap?",
-        ["Yes", "No"],
-        key="used_recommended",
-        horizontal=True,
-    )
+    # 1️⃣  Feedback form
+    with st.form("feedback_form"):
+        used_choice = st.radio(
+            "Did you use the recommended flap?",
+            ["Yes", "No"],
+            key="used_recommended",
+            horizontal=True,
+        )
 
-    alt_flap_val = st.text_input(          # ← always enabled now
-        "If you used a different flap, which one?",
-        key="alt_flap_text",
-        placeholder="Type alternative flap here…"
-    )
+        # Textbox is always enabled now
+        alt_flap_val = st.text_input(
+            "If you used a different flap, which one?",
+            key="alt_flap_text",
+            placeholder="Type alternative flap here…"
+        )
 
-    send = st.form_submit_button("Submit feedback")
+        send = st.form_submit_button("Submit feedback")
 
-# write to CSV only after basic validation
-if send:
-    if used_choice == "No" and not alt_flap_val.strip():
-        st.warning("Please tell us which flap you used.")
-        st.stop()
+    # 2️⃣  On submit, validate and write to CSV
+    if send:
+        # Require textbox entry if user chose “No”
+        if used_choice == "No" and not alt_flap_val.strip():
+            st.warning("Please tell us which flap you used.")
+            st.stop()
 
-        # a. extract plain flap name from markdown
-        md = st.session_state.recommendation
-        m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
+        import re, csv
+
+        # Extract recommended flap from markdown
+        m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", st.session_state.recommendation)
         rec_flap = m.group(1).strip() if m else "(parse failed)"
 
-        # b. build CSV row
+        # Build row
         row = st.session_state.case_row.copy()
         row.update({
             "recommended_flap":  rec_flap,
-            "used_recommended":  (st.session_state.used_recommended == "Yes"),
-            "alt_flap_if_no":    st.session_state.alt_flap_text.strip(),
+            "used_recommended":  (used_choice == "Yes"),
+            "alt_flap_if_no":    alt_flap_val.strip(),
         })
 
-        # c. append row, adding header on first write
+        # Append to CSV
         first_write = not DATA_PATH.exists()
         with DATA_PATH.open("a", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=row.keys())
+            writer = csv.DictWriter(f, fieldnames=row.keys(), quoting=csv.QUOTE_MINIMAL)
             if first_write:
                 writer.writeheader()
             writer.writerow(row)
@@ -544,14 +547,10 @@ if send:
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
 
-        # clear per-case widget state
+        # Clear per-case widget state
         for k in ("used_recommended", "alt_flap_text"):
             st.session_state.pop(k, None)
 
-        # clear per-case widget state
-        for k in ("used_recommended", "alt_flap_text"):
-            if k in st.session_state:
-                del st.session_state[k]
 
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
