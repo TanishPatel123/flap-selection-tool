@@ -417,7 +417,7 @@ def log_row(row: dict) -> None:
 st.set_page_config("Flap-Selector (Research)", "🩺", layout="wide")
 
 with st.sidebar:
-    st.header("Research & Privacy")
+    st.header("Flap Selection Tool")
     st.markdown(
         "**Prototype** tool for determining optimal local flap for excision closure.\n\n"
         "No personal identifiers are saved.\n"
