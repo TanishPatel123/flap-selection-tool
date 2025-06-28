@@ -493,38 +493,52 @@ if not st.session_state.case_submitted:
 # ───────────────────────────────────────────────────────────────
 # 2️⃣  SHOW RECOMMENDATION & FEEDBACK  (single page)
 # ───────────────────────────────────────────────────────────────
-# ───────── STAGE 2 – recommendation + feedback (single-page) ─────────
+# ───────── STAGE 2 – recommendation + feedback (single page) ─────────
 if st.session_state.case_submitted and not st.session_state.feedback_done:
     st.markdown(st.session_state.recommendation)
 
+    # 1️⃣  Feedback form – widgets have unique keys so values persist
     with st.form("feedback_form"):
-        used = st.radio("Did you use the recommended flap?", ["Yes", "No"])
-        alt_flap = st.text_input("Which flap did you use instead?") if used == "No" else ""
+        used = st.radio(
+            "Did you use the recommended flap?",
+            ["Yes", "No"],
+            key="used_recommended",          # persist in session_state
+        )
+        # Text box always exists (hidden CSS optional), value stored under key
+        alt_flap = st.text_input(
+            "Which flap did you use instead?",
+            key="alt_flap_text"
+        ) if used == "No" else ""
         send = st.form_submit_button("Submit feedback")
 
+    # 2️⃣  On submit, build row from session_state values
     if send:
-        # 1️⃣ Pull the **plain text** flap name from the recommendation block
         import re
-        md = st.session_state.recommendation
-        match = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
-        rec_flap = match.group(1).strip() if match else "(parse failed)"
 
-        # 2️⃣ Assemble the CSV row with ALL required columns
+        # Pull the flap name from the markdown block
+        md = st.session_state.recommendation
+        m = re.search(r"\*\*Recommended flap:\*\*\s*(.+)", md)
+        rec_flap = m.group(1).strip() if m else "(parse failed)"
+
         row = st.session_state.case_row.copy()
         row.update({
-            "recommended_flap":   rec_flap,
-            "used_recommended":   (used == "Yes"),
-            "alt_flap_if_no":     alt_flap.strip(),
+            "recommended_flap":  rec_flap,
+            "used_recommended":  (st.session_state.used_recommended == "Yes"),
+            "alt_flap_if_no":    st.session_state.get("alt_flap_text", "").strip(),
         })
 
-        # 3️⃣ Write (add header if file doesn't exist yet)
-        first_write = not DATA_PATH.exists()
+        first = not DATA_PATH.exists()
         pd.DataFrame([row]).to_csv(
-            DATA_PATH, mode="a", header=first_write, index=False
+            DATA_PATH, mode="a", header=first, index=False
         )
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
+        # Clear widget state so the next case starts fresh
+        for k in ("used_recommended", "alt_flap_text"):
+            if k in st.session_state:
+                del st.session_state[k]
+
 
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
