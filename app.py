@@ -422,8 +422,8 @@ with st.sidebar:
         "**Prototype** tool for determining optimal local flap for excision closure.\n\n"
         "No personal identifiers are saved.\n"
         "Only anonymous input parameters & your feedback are stored "
-        "in a private file visible *only* to the Research team.\n"
-        "Made by referencing Baker - 3rd edition, Neligan Volume 1 & 3 - 5th edition.\n" 
+        "in a private file visible *only* to the Research team.\n\n"
+        "Made by referencing Baker — 3rd edition, Neligan Volume 1 & 3 — 5th edition.\n" 
     )
     if DATA_PATH.exists():
         st.caption(f"Logged cases: {len(pd.read_csv(DATA_PATH))}")
