@@ -514,7 +514,7 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             placeholder="Type alternative flap here…"
         )
 
- send = st.form_submit_button("Submit feedback")
+        send = st.form_submit_button("Submit feedback")
 
     # 2️⃣  On submit, validate and write to CSV
     if send:
@@ -547,7 +547,7 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
-    
+
         # Clear per-case widget state
         for k in ("used_recommended", "alt_flap_text"):
             st.session_state.pop(k, None)
