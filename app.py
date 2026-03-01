@@ -513,6 +513,18 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             key="alt_flap_text",
             placeholder="Type alternative flap here…"
         )
+# ✅ Add two upload boxes
+    pre_img = st.file_uploader(
+        "Upload PRE-excision / PRE-repair image",
+        type=["png", "jpg", "jpeg"],
+        key="pre_image_upload",
+    )
+
+    post_img = st.file_uploader(
+        "Upload POST-excision / POST-repair image",
+        type=["png", "jpg", "jpeg"],
+        key="post_image_upload",
+    )
 
         send = st.form_submit_button("Submit feedback")
 
@@ -547,7 +559,21 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
 
         st.success("Thank you — entry logged.")
         st.session_state.feedback_done = True
+    
+# ✅ Append to Excel with images anchored to the row cells
+    append_to_excel_with_images(EXCEL_PATH, row, pre_img, post_img)
 
+    st.success("Thank you — entry logged (CSV + Excel with embedded images).")
+    st.session_state.feedback_done = True
+
+    # Offer download of the updated Excel file
+    with EXCEL_PATH.open("rb") as f:
+        st.download_button(
+            "Download Excel (with embedded images)",
+            data=f,
+            file_name=EXCEL_PATH.name,
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
         # Clear per-case widget state
         for k in ("used_recommended", "alt_flap_text"):
             st.session_state.pop(k, None)
