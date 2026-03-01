@@ -513,7 +513,8 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             key="alt_flap_text",
             placeholder="Type alternative flap here…"
         )
-       send = st.form_submit_button("Submit feedback")
+       
+   send = st.form_submit_button("Submit feedback")
 
     # 2️⃣  On submit, validate and write to CSV
     if send:
