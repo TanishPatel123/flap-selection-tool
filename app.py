@@ -536,7 +536,7 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         )
 
         experience_level = st.selectbox(
-            "Experience level",
+            "Experience level (only if faculty)",
             [
                 "",
                 "Early Career Faculty <5years",
