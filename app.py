@@ -474,7 +474,7 @@ if not st.session_state.case_submitted:
         st.markdown("##### Additional clinical details")
         patient_sex = c1.selectbox(
             "Patient sex",
-            ["", "Male", "Female", "Other / Intersex", "Unknown"]
+            ["", "Male", "Female", "Other"]
         )
         cancer_type = c2.text_input(
             "Type of cancer",
