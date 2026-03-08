@@ -524,7 +524,6 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         pgy_levels = st.multiselect(
             "PGY level",
             [
-                "Medical Student",
                 "PGY-1",
                 "PGY-2",
                 "PGY-3",
