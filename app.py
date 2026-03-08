@@ -471,20 +471,46 @@ if not st.session_state.case_submitted:
                                 value=60, step=1)
         hair  = c2.checkbox("Hair-bearing skin?", True)
 
+        st.markdown("##### Additional clinical details")
+        patient_sex = c1.selectbox(
+            "Patient sex",
+            ["", "Male", "Female", "Other / Intersex", "Unknown"]
+        )
+        cancer_type = c2.text_input(
+            "Type of cancer",
+            placeholder="e.g. BCC, SCC, melanoma"
+        )
+        margin_size_mm = c1.number_input(
+            "Margin size (mm)",
+            min_value=0.0,
+            max_value=50.0,
+            value=0.0,
+            step=1.0
+        )
+
         st.markdown("##### Risk factors")
         dia = st.checkbox("Diabetes")
         smk = st.checkbox("Active smoker")
         rad = st.checkbox("Previously irradiated site")
 
         submitted = st.form_submit_button("Recommend flap")
-
+       
     if submitted:
         # compute recommendation and stash everything
         st.session_state.case_row = {
             "timestamp_utc": datetime.utcnow().isoformat(timespec="seconds"),
-            "loc": loc, "kind": kind, "depth": depth.split()[0],
-            "cm": cm, "hair": hair, "age": age,
-            "dia": dia, "smk": smk, "rad": rad,
+            "loc": loc,
+            "kind": kind,
+            "depth": depth.split()[0],
+            "cm": cm,
+            "hair": hair,
+            "age": age,
+            "patient_sex": patient_sex,
+            "cancer_type": cancer_type.strip(),
+            "margin_size_mm": margin_size_mm,
+            "dia": dia,
+            "smk": smk,
+            "rad": rad,
         }
         st.session_state.recommendation = decide(
             loc, kind, cm, depth, hair, age, dia, smk, rad
