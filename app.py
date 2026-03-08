@@ -507,11 +507,71 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             horizontal=True,
         )
 
-        # Textbox is always enabled now
         alt_flap_val = st.text_input(
             "If you used a different flap, which one?",
             key="alt_flap_text",
             placeholder="Type alternative flap here…"
+        )
+
+        st.markdown("##### Additional feedback")
+
+        physician_name = st.text_input(
+            "Physician name",
+            key="physician_name",
+            placeholder="Enter physician name"
+        )
+
+        pgy_levels = st.multiselect(
+            "PGY level",
+            [
+                "Medical Student",
+                "PGY-1",
+                "PGY-2",
+                "PGY-3",
+                "PGY-4",
+                "PGY-5",
+                "Fellow",
+                "Staff",
+            ],
+            key="pgy_levels"
+        )
+
+        experience_level = st.selectbox(
+            "Experience level",
+            [
+                "",
+                "Early Career Faculty <5years",
+                "Faculty 5-10years",
+                "Faculty 10-20 years",
+                "Faculty > 20 years",
+            ],
+            key="experience_level"
+        )
+       
+        q2_algorithm_help = st.radio(
+            "To what extent did your recon plan match the algorithm suggestion?",
+            [
+                "Strongly Agree",
+                "Agree",
+                "Neutral",
+                "Disagree",
+                "Strongly Disagree",
+            ],
+            key="algorithm_assist_q2",
+            horizontal=True,
+        )
+       
+        q3_algorithm_help = st.radio(
+            "To what extent did the algorithm assist you in recon planning? (Question 3)",
+            [
+                "Very helpful",
+                "Helpful",
+                "Neutral",
+                "Unhelpful",
+                "Very unhelpful",
+            ],
+            key="algorithm_assist_q3",
+            horizontal=True,
         )
 
         send = st.form_submit_button("Submit feedback")
@@ -532,14 +592,19 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         # Build row
         row = st.session_state.case_row.copy()
         row.update({
-            "recommended_flap":  rec_flap,
-            "used_recommended":  (used_choice == "Yes"),
-            "alt_flap_if_no":    alt_flap_val.strip(),
+            "recommended_flap": rec_flap,
+            "used_recommended": (used_choice == "Yes"),
+            "alt_flap_if_no": alt_flap_val.strip(),
+            "physician_name": physician_name.strip(),
+            "pgy_levels": "|".join(pgy_levels),
+            "experience_level": experience_level,
+            "algorithm_assist_recon_planning_q2": q2_algorithm_help,
+            "algorithm_assist_recon_planning_q3": q3_algorithm_help,
         })
 
         # Append to CSV
         first_write = not DATA_PATH.exists()
-        with DATA_PATH.open("a", newline="") as f:
+        with DATA_PATH.open("a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=row.keys(), quoting=csv.QUOTE_MINIMAL)
             if first_write:
                 writer.writeheader()
@@ -549,9 +614,16 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         st.session_state.feedback_done = True
 
         # Clear per-case widget state
-        for k in ("used_recommended", "alt_flap_text"):
+        for k in (
+            "used_recommended",
+            "alt_flap_text",
+            "physician_name",
+            "pgy_levels",
+            "experience_level",
+            "algorithm_assist_q2",
+            "algorithm_assist_q3",
+        ):
             st.session_state.pop(k, None)
-
 
 # ───────────────────────────────────────────────────────────────
 # 3️⃣  RESET BUTTON AFTER FEEDBACK
