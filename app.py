@@ -561,7 +561,7 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
         )
        
         q3_algorithm_help = st.radio(
-            "To what extent did the algorithm assist you in recon planning? (Question 3)",
+            "To what extent did the algorithm assist you in recon planning?",
             [
                 "Very helpful",
                 "Helpful",
@@ -572,7 +572,12 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             key="algorithm_assist_q3",
             horizontal=True,
         )
-
+        final_comments_rationale = st.text_area(
+            "Final comments / rationale",
+            key="final_comments_rationale",
+            placeholder="Add any comments, rationale, or context here..."
+        )
+       
         send = st.form_submit_button("Submit feedback")
 
     # 2️⃣  On submit, validate and write to CSV
@@ -599,8 +604,8 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             "experience_level": experience_level,
             "algorithm_assist_recon_planning_q2": q2_algorithm_help,
             "algorithm_assist_recon_planning_q3": q3_algorithm_help,
+            "final_comments_rationale": final_comments_rationale.strip(),
         })
-
         # Append to CSV
         first_write = not DATA_PATH.exists()
         with DATA_PATH.open("a", newline="", encoding="utf-8") as f:
@@ -621,6 +626,7 @@ if st.session_state.case_submitted and not st.session_state.feedback_done:
             "experience_level",
             "algorithm_assist_q2",
             "algorithm_assist_q3",
+            "final_comments_rationale",
         ):
             st.session_state.pop(k, None)
 
