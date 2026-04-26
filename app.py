@@ -448,7 +448,7 @@ SUBUNITS = [
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
     "Oral commissure", "Cheek – infra-orbital", "Cheek – medial", 
-    "Neck – anterior", "Neck – posterior" 
+    "Neck – anterior", "Neck – posterior", 
     "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
     "Ear – lobule", "Peri-auricular skin",
 ]
