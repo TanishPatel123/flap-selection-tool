@@ -1,6 +1,6 @@
 # app.py – Head-&-Neck Local-Flap Selector (research prototype)
 # Author: Tanish Patel
-# Updated: Added Neck subunits, lateral cheek, and pathology-sensitive logic
+# Updated: Added Neck subunits, lateral cheek, pathology-sensitive logic, and margin-guidance notes
 # -----------------------------------------------------------------
 from pathlib import Path
 from datetime import datetime, date
@@ -24,7 +24,7 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
     "Cheek – lateral", "Chin – mentum", "Neck – anterior", "Neck – posterior",
     "Ear – helical rim", "Ear – conchal bowl", "Ear – lobule",
     "Peri-auricular skin",
@@ -55,7 +55,7 @@ THR = {
     "Lower lip – lateral": (1, 2),
     "Oral commissure": (1, 1.5),
     "Cheek – infra-orbital": (1.5, 3),
-    "Cheek – medial": (2, 4),
+    "Cheek – buccal": (2, 4),
     "Cheek – lateral": (2, 4),
     "Chin – mentum": (1.5, 3),
     "Neck – anterior": (2, 5),
@@ -90,6 +90,65 @@ def normalize_pathology(cancer_type: str) -> str:
     if "bcc" in txt or "basal" in txt:
         return "BCC"
     return cancer_type.strip()
+
+
+def recommended_margin_note(pathology: str, loc: str = "", breslow_mm: float = 0.0, tumour_risk: str = "") -> str:
+    """Return literature-based clinical excision margin guidance for common cutaneous malignancies."""
+    pathology = normalize_pathology(pathology)
+    risk_txt = (tumour_risk or "").lower()
+    high_risk = "high" in risk_txt or "complex" in risk_txt or "recurrent" in risk_txt or "ill" in risk_txt
+
+    if pathology == "BCC":
+        if high_risk:
+            return (
+                "Recommended margin guidance for BCC: low-risk primary BCC is commonly excised with ~4 mm clinical margins; "
+                "for high-risk, recurrent, ill-defined, aggressive histology, or cosmetically/functionally sensitive head and neck sites, "
+                "consider Mohs/margin-controlled excision or wider margins when feasible."
+            )
+        return (
+            "Recommended margin guidance for BCC: low-risk primary BCC is commonly excised with ~4 mm clinical margins; "
+            "use Mohs/margin-controlled excision or wider margins for high-risk, recurrent, ill-defined, or aggressive lesions."
+        )
+
+    if pathology == "SCC":
+        if high_risk:
+            return (
+                "Recommended margin guidance for cutaneous SCC: low-risk primary cSCC is commonly excised with 4-6 mm clinical margins; "
+                "high-risk lesions generally warrant margin-controlled excision/Mohs when available, or wider margins when anatomically feasible."
+            )
+        return (
+            "Recommended margin guidance for cutaneous SCC: low-risk primary cSCC is commonly excised with 4-6 mm clinical margins; "
+            "consider margin-controlled excision or wider margins for high-risk features."
+        )
+
+    if pathology == "Melanoma in situ":
+        head_neck_sensitive = any(term in loc for term in ["Nasal", "eyelid", "canthus", "lip", "Ear", "Peri-auricular"])
+        extra = (
+            " For head and neck sites near the eyelid, nose, lip, or ear, margin-controlled excision before reconstruction may be useful when tissue sparing is important."
+            if head_neck_sensitive else ""
+        )
+        return (
+            "Recommended margin guidance for melanoma in situ: 5 mm-1 cm clinical radial margin when feasible." + extra
+        )
+
+    if pathology == "Melanoma":
+        if breslow_mm and breslow_mm > 0:
+            if breslow_mm <= 1.0:
+                margin = "1 cm"
+            elif breslow_mm <= 2.0:
+                margin = "1-2 cm"
+            else:
+                margin = "2 cm"
+            return (
+                f"Recommended margin guidance for invasive melanoma: Breslow thickness {breslow_mm:g} mm → {margin} clinical radial margin when anatomically feasible. "
+                "On the head and neck, margins may need modification for function/cosmesis; consider staged or margin-controlled excision before complex reconstruction."
+            )
+        return (
+            "Recommended margin guidance for invasive melanoma depends on Breslow thickness: ≤1.0 mm → 1 cm; 1.01-2.0 mm → 1-2 cm; >2.0 mm → 2 cm, when anatomically feasible. "
+            "Add Breslow thickness to generate a specific margin note."
+        )
+
+    return ""
 
 
 def melanoma_preferred_repair(loc: str, size: str, depth: str) -> tuple[str, str]:
@@ -257,7 +316,7 @@ def safe_logged_case_count() -> int:
 # ──────────────────────────────────────────────────────────────
 # 2. DECISION ENGINE
 # ──────────────────────────────────────────────────────────────
-def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margin_size_mm=0.0):
+def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margin_size_mm=0.0, breslow_mm=0.0, tumour_risk=""):
     size = _cat(loc, cm)
     flap = rationale = ""
 
@@ -531,7 +590,7 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margi
             "medium": "1.5-3 cm Mustardé malar rotation.",
             "large": ">3 cm cervicofacial flap.",
         })
-    elif loc == "Cheek – medial":
+    elif loc == "Cheek – buccal":
         if depth.startswith("Full"):
             flap = "Cervicofacial rotation flap"
             rationale = "Deep buccal loss best with large rotation."
@@ -686,6 +745,7 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margi
     # ————————————————— PATHOLOGY-SENSITIVE MODIFIER —————————————————
     pathology = normalize_pathology(cancer_type)
     melanoma_like = pathology in ["Melanoma", "Melanoma in situ"]
+    margin_guidance = recommended_margin_note(pathology, loc, breslow_mm, tumour_risk)
 
     if kind == "Oncologic" and melanoma_like:
         flap, rationale = melanoma_preferred_repair(loc, size, depth)
@@ -709,10 +769,14 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margi
             notes.append(
                 f"Pathology: {pathology}. Prefer primary closure or advancement-based repair when feasible; avoid rotation-heavy flap design until margins are clear because tissue rearrangement can obscure the original margin bed."
             )
+            if margin_guidance:
+                notes.append(margin_guidance)
             if margin_size_mm:
                 notes.append(f"Recorded clinical margin: {margin_size_mm:g} mm.")
         elif pathology in ["BCC", "SCC"]:
             notes.append(f"Pathology: {pathology}. Local flap selection may proceed based on subunit, size, depth, laxity, and margin status.")
+            if margin_guidance:
+                notes.append(margin_guidance)
             if margin_size_mm:
                 notes.append(f"Recorded clinical margin: {margin_size_mm:g} mm.")
         else:
@@ -804,6 +868,19 @@ if not st.session_state.case_submitted:
             ["", "BCC", "SCC", "Melanoma", "Melanoma in situ", "Other"],
             help="Used to modify reconstruction logic for melanoma/MIS when margin-bed preservation is important.",
         )
+        tumour_risk = c2.selectbox(
+            "Tumour risk level",
+            ["", "Low-risk", "High-risk / complex / recurrent / ill-defined"],
+            help="Used for BCC/SCC margin note. Leave blank if unknown.",
+        )
+        breslow_mm = c1.number_input(
+            "Breslow thickness (mm) if invasive melanoma",
+            min_value=0.0,
+            max_value=20.0,
+            value=0.0,
+            step=0.1,
+            help="Only used when pathology is invasive melanoma. Leave 0 if not applicable or unknown.",
+        )
         margin_size_mm = c1.number_input(
             "Margin size (mm)",
             min_value=0.0,
@@ -830,12 +907,16 @@ if not st.session_state.case_submitted:
             "age": age,
             "patient_sex": patient_sex,
             "cancer_type": cancer_type.strip(),
+            "tumour_risk": tumour_risk,
+            "breslow_mm": breslow_mm,
             "margin_size_mm": margin_size_mm,
             "dia": dia,
             "smk": smk,
             "rad": rad,
         }
-        st.session_state.recommendation = decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type, margin_size_mm)
+        st.session_state.recommendation = decide(
+            loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type, margin_size_mm, breslow_mm, tumour_risk
+        )
         st.session_state.case_submitted = True
 
 
