@@ -282,65 +282,74 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
                          if size=="small"
                          else "1-1.5 cm lateral loss Estlander flap.")
 
-    # ————————————————— CHEEK / CHIN —————————————————
+        # ————————————————— CHEEK / CHIN —————————————————
     elif loc == "Cheek – infra-orbital":
-        flap = pick(size,{
-            "small":"Malar V-Y advancement",
-            "medium":"Mustardé cheek rotation",
-            "large":"Cervicofacial rotation"})
-        rationale = pick(size,{
-            "small":"≤1.5 cm V-Y under eyelid.",
-            "medium":"1.5-3 cm Mustardé malar rotation.",
-            "large":">3 cm cervicofacial flap."})
+        flap = pick(size, {
+            "small": "Malar V-Y advancement",
+            "medium": "Mustardé cheek rotation",
+            "large": "Cervicofacial rotation",
+        })
+        rationale = pick(size, {
+            "small": "≤1.5 cm V-Y under eyelid.",
+            "medium": "1.5-3 cm Mustardé malar rotation.",
+            "large": ">3 cm cervicofacial flap.",
+        })
+
     elif loc == "Cheek – medial":
         if depth.startswith("Full"):
-            flap="Cervicofacial rotation flap"
-            rationale="Deep buccal loss best with large rotation."
+            flap = "Cervicofacial rotation flap"
+            rationale = "Deep buccal loss best with large rotation."
         else:
-            flap = pick(size,{
-                "small":"Limberg rhomboid flap",
-                "medium":"V-Y cheek advancement",
-                "large":"Cervicofacial rotation"})
-            rationale = pick(size,{
-                "small":"≤2 cm rhomboid along smile lines.",
-                "medium":"2-4 cm V-Y advancement.",
-                "large":">4 cm cervicofacial flap."})
-     elif loc == "Cheek – lateral":
-    if depth.startswith("Full"):
-        flap = pick(size, {
-            "small": "Limberg rhomboid transposition flap",
-            "medium": "Cervicofacial rotation-advancement flap",
-            "large": "Extended cervicofacial rotation flap",
-        })
-        rationale = pick(size, {
-            "small": "Small deeper lateral-cheek defects can be closed with adjacent transposition while respecting relaxed skin tension lines.",
-            "medium": "Lateral cheek and preauricular laxity can be recruited with cervicofacial rotation-advancement for deeper defects.",
-            "large": "Large lateral-cheek defects usually need broad cervicofacial recruitment to maintain contour and avoid distortion of nearby units.",
-        })
-    else:
-        flap = pick(size, {
-            "small": "Limberg rhomboid flap",
-            "medium": "V-Y lateral cheek advancement flap",
-            "large": "Cervicofacial rotation flap",
-        })
-        rationale = pick(size, {
-            "small": "≤2 cm lateral-cheek defects can use a rhomboid flap designed along relaxed skin tension lines.",
-            "medium": "2-4 cm lateral-cheek defects can be advanced from adjacent cheek/preauricular laxity.",
-            "large": ">4 cm lateral-cheek defects are best served by cervicofacial rotation to recruit broader cheek-neck skin.",
-        })
+            flap = pick(size, {
+                "small": "Limberg rhomboid flap",
+                "medium": "V-Y cheek advancement",
+                "large": "Cervicofacial rotation",
+            })
+            rationale = pick(size, {
+                "small": "≤2 cm rhomboid along smile lines.",
+                "medium": "2-4 cm V-Y advancement.",
+                "large": ">4 cm cervicofacial flap.",
+            })
+
+    elif loc == "Cheek – lateral":
+        if depth.startswith("Full"):
+            flap = pick(size, {
+                "small": "Limberg rhomboid transposition flap",
+                "medium": "Cervicofacial rotation-advancement flap",
+                "large": "Extended cervicofacial rotation flap",
+            })
+            rationale = pick(size, {
+                "small": "Small deeper lateral-cheek defects can be closed with adjacent transposition while respecting relaxed skin tension lines.",
+                "medium": "Lateral cheek and preauricular laxity can be recruited with cervicofacial rotation-advancement for deeper defects.",
+                "large": "Large lateral-cheek defects usually need broad cervicofacial recruitment to maintain contour and avoid distortion of nearby units.",
+            })
+        else:
+            flap = pick(size, {
+                "small": "Limberg rhomboid flap",
+                "medium": "V-Y lateral cheek advancement flap",
+                "large": "Cervicofacial rotation flap",
+            })
+            rationale = pick(size, {
+                "small": "≤2 cm lateral-cheek defects can use a rhomboid flap designed along relaxed skin tension lines.",
+                "medium": "2-4 cm lateral-cheek defects can be advanced from adjacent cheek/preauricular laxity.",
+                "large": ">4 cm lateral-cheek defects are best served by cervicofacial rotation to recruit broader cheek-neck skin.",
+            })
+
     elif loc == "Chin – mentum":
         if depth.startswith("Full"):
-            flap="Submental island flap"
-            rationale="Full-thickness chin needs pedicled submental."
+            flap = "Submental island flap"
+            rationale = "Full-thickness chin needs pedicled submental."
         else:
-            flap = pick(size,{
-                "small":"H-plasty bilateral advancement",
-                "medium":"Submental advancement flap",
-                "large":"Extended cervicofacial rotation"})
-            rationale = pick(size,{
-                "small":"≤1.5 cm bilateral advancement under chin.",
-                "medium":"1.5-3 cm submental laxity advanced.",
-                "large":">3 cm cheek-neck rotation."})
+            flap = pick(size, {
+                "small": "H-plasty bilateral advancement",
+                "medium": "Submental advancement flap",
+                "large": "Extended cervicofacial rotation",
+            })
+            rationale = pick(size, {
+                "small": "≤1.5 cm bilateral advancement under chin.",
+                "medium": "1.5-3 cm submental laxity advanced.",
+                "large": ">3 cm cheek-neck rotation.",
+            })
     # ————————————————— NECK —————————————————
     elif loc == "Neck – anterior":
         if depth.startswith("Full"):
