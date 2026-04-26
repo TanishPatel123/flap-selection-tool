@@ -19,8 +19,9 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
-    "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial",
+    "Chin – mentum","Neck – anterior", "Neck – posterior",   
+    "Ear – helical rim", "Ear – conchal bowl",
     "Ear – lobule", "Peri-auricular skin",
 ]
 
@@ -39,9 +40,10 @@ THR = {
     "Upper lip – central": (0.8, 1.6), "Upper lip – lateral": (0.8, 1.6),
     "Lower lip – central": (1, 2), "Lower lip – lateral": (1, 2),
     "Oral commissure": (1, 1.5),
-    "Cheek – infra-orbital": (1.5, 3), "Cheek – buccal": (2, 4), "Chin – mentum": (1.5, 3),
+    "Cheek – infra-orbital": (1.5, 3), "Cheek – medial": (2, 4), "Chin – mentum": (1.5, 3),
     "Ear – helical rim": (1, 1.5), "Ear – conchal bowl": (1.5, 2.5),
     "Ear – lobule": (1, 1.5), "Peri-auricular skin": (2, 4),
+    "Neck – anterior": (2, 5), "Neck – posterior": (2, 5),
 }
 
 def _cat(loc: str, cm: float) -> str:
@@ -290,7 +292,7 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
             "small":"≤1.5 cm V-Y under eyelid.",
             "medium":"1.5-3 cm Mustardé malar rotation.",
             "large":">3 cm cervicofacial flap."})
-    elif loc == "Cheek – buccal":
+    elif loc == "Cheek – medial":
         if depth.startswith("Full"):
             flap="Cervicofacial rotation flap"
             rationale="Deep buccal loss best with large rotation."
@@ -316,7 +318,54 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
                 "small":"≤1.5 cm bilateral advancement under chin.",
                 "medium":"1.5-3 cm submental laxity advanced.",
                 "large":">3 cm cheek-neck rotation."})
+    # ————————————————— NECK —————————————————
+    elif loc == "Neck – anterior":
+        if depth.startswith("Full"):
+            flap = pick(size, {
+                "small": "Platysma-supported bilateral cervical advancement flap",
+                "medium": "Cervical rotation-advancement flap",
+                "large": "Cervicothoracic advancement / rotation flap",
+            })
+            rationale = pick(size, {
+                "small": "Deep anterior-neck defect benefits from vascularized platysma support and layered closure.",
+                "medium": "Anterior cervical skin laxity can be recruited with rotation-advancement while keeping scars in neck creases.",
+                "large": "Large anterior-neck defects usually require recruitment from lower cervical or upper chest skin.",
+            })
+        else:
+            flap = pick(size, {
+                "small": "Horizontal primary closure in relaxed neck crease",
+                "medium": "Bilateral cervical advancement flap / O-T advancement",
+                "large": "Cervicothoracic advancement flap",
+            })
+            rationale = pick(size, {
+                "small": "≤2 cm anterior-neck defects often close well along transverse cervical rhytids.",
+                "medium": "2-5 cm defects can use lax anterior cervical skin with bilateral advancement and Burow management.",
+                "large": ">5 cm defects generally need broader cervical or cervicothoracic tissue recruitment.",
+            })
 
+    elif loc == "Neck – posterior":
+        if depth.startswith("Full"):
+            flap = pick(size, {
+                "small": "Posterior cervical rotation flap",
+                "medium": "Trapezius myocutaneous advancement/rotation flap",
+                "large": "Trapezius myocutaneous flap ± STSG",
+            })
+            rationale = pick(size, {
+                "small": "Deep posterior-neck defects need vascularized local tissue over exposed fascia or muscle.",
+                "medium": "The trapezius region provides robust regional tissue for deeper posterior cervical defects.",
+                "large": "Large posterior-neck defects may require muscle/myocutaneous coverage, especially if critical structures are exposed.",
+            })
+        else:
+            flap = pick(size, {
+                "small": "Horizontal primary closure along posterior neck crease",
+                "medium": "Limberg rhomboid transposition flap",
+                "large": "Posterior cervical rotation flap / trapezius advancement flap",
+            })
+            rationale = pick(size, {
+                "small": "≤2 cm posterior-neck defects can usually close directly with the scar placed transversely.",
+                "medium": "2-5 cm defects are suited to rhomboid transposition using adjacent posterior cervical laxity.",
+                "large": ">5 cm defects require broader posterior cervical or trapezius-region advancement/rotation.",
+            })
     # ————————————————— EAR / PERI-AURICULAR —————————————————
     elif loc == "Ear – helical rim":
         flap = pick(size,{
@@ -376,7 +425,10 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
         notes.append("Debride & align with laceration lines.")
     elif kind == "Congenital":
         notes.append("Consider staged expansion for symmetry.")
-
+    if loc.startswith("Neck"):
+        notes.append(
+            "Orient scars within relaxed transverse neck lines when feasible; protect marginal mandibular/spinal accessory anatomy depending on subsite."
+        )
     return (
         f"**Recommended flap:** {flap}\n\n"
         f"**Rationale:** {rationale}\n\n"
