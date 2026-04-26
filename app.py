@@ -447,7 +447,8 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial", 
+    "Neck – anterior", "Neck – posterior"
     "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
     "Ear – lobule", "Peri-auricular skin",
 ]
