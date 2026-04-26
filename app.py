@@ -19,7 +19,7 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial", "Cheek – lateral",
     "Chin – mentum", "Neck – anterior", "Neck – posterior",   
     "Ear – helical rim", "Ear – conchal bowl",
     "Ear – lobule", "Peri-auricular skin",
@@ -40,7 +40,7 @@ THR = {
     "Upper lip – central": (0.8, 1.6), "Upper lip – lateral": (0.8, 1.6),
     "Lower lip – central": (1, 2), "Lower lip – lateral": (1, 2),
     "Oral commissure": (1, 1.5),
-    "Cheek – infra-orbital": (1.5, 3), "Cheek – medial": (2, 4), "Chin – mentum": (1.5, 3),
+    "Cheek – infra-orbital": (1.5, 3), "Cheek – medial": (2, 4), "Cheek – lateral": (2, 4), "Chin – mentum": (1.5, 3),
     "Ear – helical rim": (1, 1.5), "Ear – conchal bowl": (1.5, 2.5),
     "Ear – lobule": (1, 1.5), "Peri-auricular skin": (2, 4),
     "Neck – anterior": (2, 5), "Neck – posterior": (2, 5),
@@ -305,6 +305,29 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad):
                 "small":"≤2 cm rhomboid along smile lines.",
                 "medium":"2-4 cm V-Y advancement.",
                 "large":">4 cm cervicofacial flap."})
+     elif loc == "Cheek – lateral":
+    if depth.startswith("Full"):
+        flap = pick(size, {
+            "small": "Limberg rhomboid transposition flap",
+            "medium": "Cervicofacial rotation-advancement flap",
+            "large": "Extended cervicofacial rotation flap",
+        })
+        rationale = pick(size, {
+            "small": "Small deeper lateral-cheek defects can be closed with adjacent transposition while respecting relaxed skin tension lines.",
+            "medium": "Lateral cheek and preauricular laxity can be recruited with cervicofacial rotation-advancement for deeper defects.",
+            "large": "Large lateral-cheek defects usually need broad cervicofacial recruitment to maintain contour and avoid distortion of nearby units.",
+        })
+    else:
+        flap = pick(size, {
+            "small": "Limberg rhomboid flap",
+            "medium": "V-Y lateral cheek advancement flap",
+            "large": "Cervicofacial rotation flap",
+        })
+        rationale = pick(size, {
+            "small": "≤2 cm lateral-cheek defects can use a rhomboid flap designed along relaxed skin tension lines.",
+            "medium": "2-4 cm lateral-cheek defects can be advanced from adjacent cheek/preauricular laxity.",
+            "large": ">4 cm lateral-cheek defects are best served by cervicofacial rotation to recruit broader cheek-neck skin.",
+        })
     elif loc == "Chin – mentum":
         if depth.startswith("Full"):
             flap="Submental island flap"
@@ -447,7 +470,7 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial", 
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial", "Cheek – lateral",
     "Neck – anterior", "Neck – posterior", 
     "Chin – mentum", "Ear – helical rim", "Ear – conchal bowl",
     "Ear – lobule", "Peri-auricular skin",
