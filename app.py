@@ -475,7 +475,7 @@ with st.sidebar:
         "No personal identifiers are saved.\n"
         "Only anonymous input parameters & your feedback are stored "
         "in a private file visible *only* to the Research team.\n\n"
-        "Made by referencing Baker — 3rd edition, Neligan Volume 1 & 3 — 5th edition.\n" 
+        "Made by referencing Baker — 3rd edition, Neligan Volume 1 & 3 — 5th edition. DEBUG VERSION: neck update Apr 26\n" 
     )
     if DATA_PATH.exists():
         st.caption(f"Logged cases: {len(pd.read_csv(DATA_PATH))}")
