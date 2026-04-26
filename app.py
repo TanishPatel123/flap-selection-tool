@@ -24,7 +24,7 @@ SUBUNITS = [
     "Nasal ala / side-wall", "Upper eyelid", "Lower eyelid",
     "Medial canthus", "Lateral canthus", "Upper lip – central",
     "Upper lip – lateral", "Lower lip – central", "Lower lip – lateral",
-    "Oral commissure", "Cheek – infra-orbital", "Cheek – buccal",
+    "Oral commissure", "Cheek – infra-orbital", "Cheek – medial",
     "Cheek – lateral", "Chin – mentum", "Neck – anterior", "Neck – posterior",
     "Ear – helical rim", "Ear – conchal bowl", "Ear – lobule",
     "Peri-auricular skin",
@@ -55,7 +55,7 @@ THR = {
     "Lower lip – lateral": (1, 2),
     "Oral commissure": (1, 1.5),
     "Cheek – infra-orbital": (1.5, 3),
-    "Cheek – buccal": (2, 4),
+    "Cheek – medial": (2, 4),
     "Cheek – lateral": (2, 4),
     "Chin – mentum": (1.5, 3),
     "Neck – anterior": (2, 5),
@@ -590,7 +590,7 @@ def decide(loc, kind, cm, depth, hair, age, dia, smk, rad, cancer_type="", margi
             "medium": "1.5-3 cm Mustardé malar rotation.",
             "large": ">3 cm cervicofacial flap.",
         })
-    elif loc == "Cheek – buccal":
+    elif loc == "Cheek – medial":
         if depth.startswith("Full"):
             flap = "Cervicofacial rotation flap"
             rationale = "Deep buccal loss best with large rotation."
